@@ -11,7 +11,8 @@ https://app.getpostman.com/join-team?invite_code=6d7e3a15e9259a1ce90169470c4a54f
 
 For testing purpose in the root directory are placed two images
 
-fzgYoYj7tPHKSGWepRsfh-1200-80.jpg -> has normal size
-IMG_20220618_001709.jpg -> too large
+    fzgYoYj7tPHKSGWepRsfh-1200-80.jpg -> has normal size
+
+    IMG_20220618_001709.jpg -> too large
 
 You can add them to the form-data when make PATCH request
