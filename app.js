@@ -1,16 +1,17 @@
 const express = require("express");
+const fileUpload = require("express-fileupload");
+const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
-const cors = require("cors");
-const fileUpload = require("express-fileupload");
 const passport = require("passport");
 const { blogRouter, authRouter, authorRouter } = require("./src/routes");
-const CONFIG = require("./src/config");
 const { database } = require("./src/database/index");
+
+const CONFIG = require("./src/config");
 const app = express();
 
 app.use(cors());
-database.connect();
+database.connect(CONFIG.MONGODB_CONNECTION_URL);
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -28,6 +29,10 @@ app.use(
     createParentPath: true,
     useTempFiles: true,
     tempFileDir: "/tmp/",
+    limits: {
+      fileSize: 3000000, // Around 10MB
+    },
+    abortOnLimit: true,
   })
 );
 
@@ -51,6 +56,9 @@ app.use("*", (req, res) => {
 // Error Handler
 app.use(function (err, req, res, next) {
   console.log(err.message);
+  if (err.status != 500) {
+    res.status(err.status || 400).send(err.message);
+  }
   res.status(err.status || 500).send("Oops, something failed");
 });
 

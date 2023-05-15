@@ -19,6 +19,9 @@ const userValidator = Joi.object({
   }),
   password: Joi.string()
     .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})"))
+    .message(
+      "Password must have at least 8 singes: uppercase and lowercase letter and number"
+    )
     .required(),
 });
 

@@ -6,8 +6,8 @@ const authRouter = express.Router();
 
 authRouter.post(
   "/signup",
-  passport.authenticate("signup", { session: false }),
   userValidator,
+  passport.authenticate("signup", { session: false }),
   authController.signup
 );
 

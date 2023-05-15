@@ -3,6 +3,7 @@ const localStrategy = require("passport-local").Strategy;
 const UserModel = require("../models/user.model");
 const JWTstrategy = require("passport-jwt").Strategy;
 const ExtractJWT = require("passport-jwt").ExtractJwt;
+
 require("dotenv").config();
 
 passport.use(
@@ -31,10 +32,16 @@ passport.use(
     },
     async (req, email, password, done) => {
       try {
+        const userExist = await UserModel.findOne({ email });
+        if (userExist) {
+          return res
+            .status(404)
+            .json({ message: `Email ${email} already in use` });
+        }
         const user = await UserModel.create({
           ...req.body,
         });
-        console.log(user);
+
         return done(null, user);
       } catch (error) {
         console.log(error);

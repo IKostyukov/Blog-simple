@@ -1,5 +1,5 @@
-const { UserModel } = require("../models/user.model");
-const { BlogModel } = require("../models/blog.model");
+const UserModel = require("../models/user.model");
+const BlogModel = require("../models/blog.model");
 const { blogService } = require("../services");
 const moment = require("moment");
 
@@ -7,7 +7,6 @@ const moment = require("moment");
 exports.createArticle = async (req, res, next) => {
   try {
     const newArticle = req.body;
-
     // calculate reading time
     const readingTime = blogService.calculateReadingTime(newArticle.body);
 
@@ -26,22 +25,23 @@ exports.createArticle = async (req, res, next) => {
       ...newArticle,
     });
 
-    article.save((err, user) => {
-      if (err) {
+    article
+      .save(article)
+      .then(async (result) => {
+        // add article to user's articles array in the database
+        const user = await UserModel.findById(req.user._id);
+        user.articles.push(article._id);
+        await user.save();
+
+        return res.status(201).json({
+          message: "Article created successfully",
+          article: article,
+        });
+      })
+      .catch((err) => {
         console.log(`err: ${err}`);
         return next(err);
-      }
-    });
-
-    // add article to user's articles array in the database
-    const user = await UserModel.findById(req.user._id);
-    user.articles.push(article._id);
-    await user.save();
-
-    return res.status(201).json({
-      message: "Article created successfully",
-      article: article,
-    });
+      });
   } catch (error) {
     return next(error);
   }
@@ -52,24 +52,22 @@ exports.editState = async (req, res, next) => {
   try {
     const { articleId } = req.params;
     const { state } = req.body;
-
     const article = await BlogModel.findById(articleId);
-
+    if (!article) {
+      return res.status(404).json({ message: "Not found" });
+    }
     // check if user is authorised to change state
     blogService.userAuth(req, res, next, article.author._id);
-
     // validate request
     if (state !== "published" && state !== "draft") {
       return next({ status: 400, message: "Invalid state" });
     }
-
     if (article.state === state) {
       return next({
         status: 400,
         message: `Article is already in ${state} state`,
       });
     }
-
     article.state = state;
     article.timestamp = moment().toDate();
 
@@ -92,8 +90,10 @@ exports.editArticle = async (req, res, next) => {
 
     // check if user is authorised to edit article
     const article = await BlogModel.findById(articleId);
+    if (!article) {
+      return res.status(404).json({ message: "Not found" });
+    }
     blogService.userAuth(req, res, next, article.author._id);
-
     // if params are provided, update them
     if (req.files) {
       const imageUrl = await blogService.uploadImage(req, res, next);
@@ -133,12 +133,14 @@ exports.deleteArticle = async (req, res, next) => {
     const { articleId } = req.params;
 
     const article = await BlogModel.findById(articleId);
-
+    if (!article) {
+      return res.status(404).json({ message: "Not found" });
+    }
     // check if user is authorised to delete article
     blogService.userAuth(req, res, next, article.author._id);
 
-    article.remove();
-
+    const result = await article.deleteOne();
+    console.log(result);
     return res.status(200).json({
       message: "Article successfully deleted",
     });

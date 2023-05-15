@@ -17,15 +17,12 @@ const UserModel = new Schema({
   articles: [{ type: Schema.Types.ObjectId, ref: "Blog" }],
 });
 
-// Apply the uniqueValidator plugin to the user model
 UserModel.plugin(uniqueValidator);
 
 UserModel.pre("save", async function (next) {
   const user = this;
-
   if (user.isModified("password") || user.isNew) {
     const hash = await bcrypt.hash(this.password, 10);
-
     this.password = hash;
   } else {
     return next();

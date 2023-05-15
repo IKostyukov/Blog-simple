@@ -15,6 +15,11 @@ const updateArticleValidationSchema = Joi.object({
   state: Joi.string().trim(),
 });
 
+const getEntityValidationSchema = Joi.string()
+  .trim()
+  .length(24)
+  .message("Invalid uuid");
+
 const newArticleValidationMW = async (req, res, next) => {
   const article = req.body;
   try {
@@ -41,7 +46,21 @@ const updateArticleValidationMW = async (req, res, next) => {
   }
 };
 
+const getEntityValidationMW = async (req, res, next) => {
+  const articleId = req.params.articleId;
+  try {
+    await getEntityValidationSchema.validateAsync(articleId);
+    next();
+  } catch (error) {
+    return next({
+      status: 406,
+      message: error.details[0].message,
+    });
+  }
+};
+
 module.exports = {
   newArticleValidationMW,
   updateArticleValidationMW,
+  getEntityValidationMW,
 };
